@@ -1,0 +1,4 @@
+formu{
+    text-align: right
+    border: solid 1px #6F5230;
+}

@@ -1,0 +1,34 @@
+<style type="text/css">
+<!-- 
+    div #formu{
+        width:50%;
+        float:right;
+    }
+    .bo h3{
+        text-align:center;
+        position:relative;
+        top:10px;
+        left:20px;
+        color:white;
+        font-family: "georgia";
+    }
+    .bo h3 a{
+        text-align:center;
+        position:relative;
+        color:red;
+        font-family: "georgia";
+    }
+    .bo {
+        width:70%;
+        height:70px;
+        background:#6495ED;
+        margin:40px auto;
+        border-radius:15px;
+    }
+    .effect1{
+        -webkit-box-shadow: 0 10px 6px -6px #777;
+        -moz-box-shadow: 0 10px 6px -6px #777;
+        box-shadow: 0 10px 6px -6px #777;
+    }
+-->
+</style>

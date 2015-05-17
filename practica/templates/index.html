@@ -1,0 +1,90 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<!--
+
+	zenlike1.0 by nodethirtythree design
+	http://www.nodethirtythree.com
+
+-->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+
+<title>Práctica final SAT Álex</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<link rel="stylesheet" type="text/css" href="/archivos/default.css" />
+<link rel="stylesheet" type="text/css" href="/archivos/css.css" />
+
+</head>
+<body>
+
+<div id="upbg"></div>
+
+<div id="outer">
+
+
+	<div id="headerpic"></div>
+
+	
+	<div id="menu">
+		<ul>
+			<li><a href='/'>Inicio</a></li>
+			<li><a href="#">Personal</a></li>
+			<li><a href="#">Blog</a></li>
+			<li><a href="#">Gallery</a></li>
+			<li><a href="#">About</a></li>
+			<li><a href="/ayuda">Ayuda</a></li>
+		</ul>
+	</div>
+
+	<div id="menubottom"></div>
+    <div id="formu">
+	    {{ contenido|safe }}
+    </div>
+	<div id="content">
+		<div id="normalcontent">
+			<h3>{{titulo1}}</h3>
+			<div class="contentarea">
+				{{actividades|safe}}
+			</div>
+		</div>
+	
+		<div class="divider1"></div>
+
+		<div id="primarycontainer">
+			<div id="primarycontent">
+				<div class="post">
+					<h4>{{titulo2}}</h4>
+					<div class="contentarea">
+						<p>{{parseo|safe}} </p>
+						<ul class="controls">
+							<li><a href="#" class="printerfriendly">Printer Friendly</a></li>
+							<li><a href="#" class="comments">Comments (18)</a></li>
+							<li><a href="#" class="more">Read More</a></li>				
+						</ul>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<div id="footer">
+			<div class="left">&copy; 2015 Alejandro Lorenzo Caro. Todos los derechos reservados.</div>
+	</div>
+	
+</div>
+
+<style type="text/css">
+<!-- 
+    #formu{
+        width:50%;
+        float:right;
+    }
+   
+-->
+</style>
+</body>
+</html>
