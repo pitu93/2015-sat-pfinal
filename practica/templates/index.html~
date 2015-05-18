@@ -42,21 +42,25 @@
 	<div id="menubottom"></div>
     <div id="formu">
 	    {{ contenido|safe }}
+        <br><br>
+        <img class= 'fot' src = /archivos/images/foto.jpg ></img>
     </div>
 	<div id="content">
+        <container>
 		<div id="normalcontent">
 			<h3>{{titulo1}}</h3>
 			<div class="contentarea">
 				{{actividades|safe}}
 			</div>
 		</div>
-	
+	    
+        </container>
 		<div class="divider1"></div>
 
 		<div id="primarycontainer">
 			<div id="primarycontent">
 				<div class="post">
-					<h4>¿Quieres tener una página personal como estas que te mostramos? Para ello regístrate</h4>
+					<h4>{{titulo2}}</h4>
 					<div class="contentarea">
 						<p>{{parseo|safe}} </p>
 						<ul class="controls">
@@ -83,6 +87,10 @@
         width:50%;
         float:right;
     }
+    #normalcontent{
+        width:70%;
+    }
+    
    
 -->
 </style>

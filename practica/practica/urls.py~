@@ -9,9 +9,11 @@ urlpatterns = [
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^archivos/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_URL}),
-    url(r'^logout$', "app.views.logout_view"),
+    url(r'^logout/(.+)$', "app.views.logout_view"),
     url(r'^add/(.+)$', "app.views.add"),
     url(r'^eliminar/(.+)/(.+)$', "app.views.eliminar"),
+    url(r'^ayuda$', "app.views.ayuda"),
+    url(r'^actividades', "app.views.todas"),
     url(r'^(.+)$', "app.views.usuario"),
     url(r'^$', "app.views.general"),
 ]

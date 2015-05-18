@@ -116,7 +116,7 @@ def usuario(request,recurso):
 @csrf_exempt 
 def logout_view(request,recurso):
         logout(request)
-        if (recurso == 0):
+        if (recurso == '0'):
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect('/' + recurso)
@@ -162,21 +162,19 @@ def parseo(lista, request):
     bucle=[1,2,3,4,5,6,7,8,9,10]
     if request.user.is_authenticated():
         for i in bucle:
-            #salida += '<p><h7>' + lista[i]['titulo'] + '</h7><a href=/add/' + str(i) + '>Incluir a mi página personal</a></p>'
-            salida += '<p><h7>' + lista[i]['titulo'] + '</h7>. Para encontrar mas informacion <a href=' + lista[i]['url'] + '>Pulse este enlace</a> <a href=/add/' + str(i) + '>Incluir a mi pagina personal</a></p>'
+            salida += '<p><h7><a class= rojo href=' + lista[i]['url'] + '>~ ' + lista[i]['titulo'] + '</a> </h7><br><a class= azul href=/add/' + str(i) + '>Incluir a mi pagina personal</a></p><br>'
     else:
         for i in bucle:
-            #salida += '<p><h7>' + lista[i]['titulo'] + '</h7> lo celebraremos el ' + lista[i]['fecha'] +' a las ' + lista[i]['hora'] + '. Para encontrar mas informacion <a href=' + lista[i]['url'] + '>Pulse este enlace</a> </p>'
-            salida += '<p><h7>' + lista[i]['titulo'] + '</h7>. Para encontrar mas informacion <a href=' + lista[i]['url'] + '>Pulse este enlace</a> </p>'
+            salida += '<p><h7><a class= rojo href=' + lista[i]['url'] + '>~ ' + lista[i]['titulo'] + '</a> </h7></p><br>'
     return salida
     
 def parseoUser(listas):
     salida = ''
     for usuario in listas:
         if usuario.title == '':
-            salida += '<p>Esta es la pagina personal del usuario ' + usuario.user + ' de titulo <a href=/' + usuario.user + '>Pagina de ' + usuario.user +  '</a></p>'
+            salida += '<p class= user>Esta es la pagina personal del usuario ' + usuario.user + ' de titulo <a class=azul href=/' + usuario.user + '>Pagina de ' + usuario.user +  '</a></p>'
         else:
-            salida += '<p>Esta es la pagina personal del usuario ' + usuario.user + ' de titulo <a href=/' + usuario.user + '>' + usuario.title +  '</a></p>'
+            salida += '<p>Esta es la pagina personal del usuario ' + usuario.user + ' de titulo <a class=azul href=/' + usuario.user + '>' + usuario.title +  '</a></p>'
 
     return salida
 
@@ -184,7 +182,7 @@ def parseoPersonal(user):
     salida = ''
     actividades = list(Actividad.objects.filter(user=user))
     for actividad in actividades:
-        salida += '<p><h7>' + actividad.titulo + '</h7> lo celebraremos el ' + actividad.fecha +' a las ' + actividad.hora + '. Para encontrar mas informacion <a href=/actividad/id>Pulse este enlace</a><a href=/eliminar/' + actividad.ide + '/' + user + '> Eliminar actividad</a> </p>'
+        salida += '<p><h7><a class = rojo href = /actividad/id >' + actividad.titulo + '</a></h7><br> lo celebraremos el ' + actividad.fecha +'<a class = azul href=/eliminar/' + actividad.ide + '/' + user + '> Eliminar actividad</a> </p>'
 
     return salida
 
@@ -219,4 +217,17 @@ def eliminar(request, recurso, user):
             if (fila.ide == recurso):
                 fila.delete()
     return HttpResponseRedirect('/' + str(user))
+
+def ayuda(request):
+    titulo1 = 'Página de ayuda de la web'
+    ayuda = '<p class=user>En la primera parte de la página principal se muestran las 10 actividades más próximas en el tiempo.</p><p class=user> En la parte inferior de la página aparecen las cuentas de usuarios.</p><p class=user>Para poder obtener una cuenta deberás loguearte y estar registrado.</p><p class=user>Para añadir una actividad a tu cuenta, deberás seleccionar la actividad que desees y pulsar en "Incluir a mi página personal" estando logueado.</p><p class=user>Para eliminar una actividad deberás meterte en tu cuenta y pulsar "Eliminar actividad"</p>'
+    plantilla = get_template('index.html')
+    c = Context({'actividades' : ayuda, 'titulo1' : titulo1,  })
+    renderizado = plantilla.render(c)
+    return HttpResponse(renderizado)
     
+def todas(request):
+    salida=''
+    for fila in lista:
+        salida+= fila['id']
+    return HttpResponse(salida)

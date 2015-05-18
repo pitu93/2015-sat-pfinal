@@ -12,6 +12,8 @@ urlpatterns = [
     url(r'^logout/(.+)$', "app.views.logout_view"),
     url(r'^add/(.+)$', "app.views.add"),
     url(r'^eliminar/(.+)/(.+)$', "app.views.eliminar"),
+    url(r'^ayuda$', "app.views.ayuda"),
+    url(r'^todas', "app.views.todas"),
     url(r'^(.+)$', "app.views.usuario"),
     url(r'^$', "app.views.general"),
 ]

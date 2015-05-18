@@ -32,7 +32,7 @@
 		<ul>
 			<li><a href='/'>Inicio</a></li>
 			<li><a href="#">Personal</a></li>
-			<li><a href="#">Blog</a></li>
+			<li><a href="/todas">Actividades</a></li>
 			<li><a href="#">Gallery</a></li>
 			<li><a href="#">About</a></li>
 			<li><a href="/ayuda">Ayuda</a></li>
@@ -42,15 +42,19 @@
 	<div id="menubottom"></div>
     <div id="formu">
 	    {{ contenido|safe }}
+        <br><br>
+        <img class= 'fot' src = /archivos/images/foto.jpg ></img>
     </div>
 	<div id="content">
+        <container>
 		<div id="normalcontent">
 			<h3>{{titulo1}}</h3>
 			<div class="contentarea">
 				{{actividades|safe}}
 			</div>
 		</div>
-	
+	    
+        </container>
 		<div class="divider1"></div>
 
 		<div id="primarycontainer">
@@ -83,6 +87,10 @@
         width:50%;
         float:right;
     }
+    #normalcontent{
+        width:70%;
+    }
+    
    
 -->
 </style>

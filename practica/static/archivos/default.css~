@@ -117,12 +117,21 @@ margin-bottom: 1.0em;
 text-align: justify;
 }
 
-a
+a.rojo
 {
-color: #B96D00;
-text-decoration: underline;
+color: #E60000;
+text-decoration:none
+
 }
 
+a.azul{
+color:#6495ed
+
+}
+
+p.user{
+font-size: 10px
+}
 a:hover
 {
 text-decoration: none;
@@ -149,14 +158,21 @@ padding-right: 34px;
 color: #6495ED
 }
 
+.fot{
+
+    padding-left: 120px
+
+
+}
+
 h7
 {
     font-size: 1.3em;
 }
-
+    
 h4
 {
-font-size: 1.2em;
+font-size: 1.7em;
 padding-right: 28px;
 color: #6495ED
 }
@@ -168,7 +184,7 @@ padding-top: 1.3em;
 
 img
 {
-border: solid 1px #6F5230;
+
 }
 
 img.left
@@ -397,7 +413,7 @@ text-decoration: none;
 
 #menu ul li a:hover
 {
-text-decoration: underline;
+
 }
 
 #menu ul li a.active
