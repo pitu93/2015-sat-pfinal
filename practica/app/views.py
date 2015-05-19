@@ -13,8 +13,11 @@ import sys
 import string
 from models import Tabla
 from models import Actividad
+import time
 
 formu = "<form class = 'uno' action='' method='POST'><h2><span class='entypo-login'></span>Loguéate</h2><button class='submit'><span class='entypo-lock'></span></button><span class='entypo-user inputUserIcon'></span><input type='text' class='user' name='nombre'placeholder='ursername'/><span class='entypo-key inputPassIcon'></span><input type='password' name='contra' class='pass'placeholder='password'/></form>"
+
+fechas = ''
 
 
 def normalize_whitespace(text):
@@ -113,9 +116,9 @@ def logout_view(request,recurso):
         else:
             return HttpResponseRedirect('/' + recurso)
 
-def plantilla(contenido, titulo1, actividades, titulo2, parseo, user): 
+def plantilla(contenido, titulo1, actividades, titulo2, parseo, user):
     plantilla = get_template('index.html')
-    c = Context({'contenido': contenido, 'actividades' : actividades, 'parseo' : parseo, 'titulo1' : titulo1, 'titulo2' : titulo2,'user':user })
+    c = Context({'contenido': contenido, 'actividades' : actividades, 'parseo' : parseo, 'titulo1' : titulo1, 'titulo2' : titulo2,'user': user })
     renderizado = plantilla.render(c)
     return renderizado
 
@@ -196,8 +199,15 @@ def parseoPersonal(user):
 
     return salida
 
-def add(request, recurso, recurso2):
-    recurso = int(recurso)
+def add(request, recurso1):
+    recurso = int(recurso1.split('/')[0])
+    i=1;
+    longi= len(recurso1.split('/')[1:])
+    recurso2 = '/'
+    while (i<= longi):        
+        recurso2 += '/' + recurso1.split('/')[i]
+        i+=1
+    print recurso2
     actividades = list(Actividad.objects.filter(user=request.user))
     aux = False
     if( len(list(Actividad.objects.all())) == 10):
@@ -245,14 +255,16 @@ def ayuda(request):
         formu1 = "<ul class='bo effect1'> <h3>Eres " + request.user.username + "<br> Para salir pulsa " + "<a href= '/logout/ayuda'>aqui</a></h3></ul> "
         miusuario = request.user
 
-    ayuda = '<p class=user>En la primera parte de la página principal se muestran las 10 actividades más próximas en el tiempo.</p><p class=user> En la parte inferior de la página aparecen las cuentas de usuarios.</p><p class=user>Para poder obtener una cuenta deberás loguearte y estar registrado.</p><p class=user>Para añadir una actividad a tu cuenta, deberás seleccionar la actividad que desees y pulsar en "Incluir a mi página personal" estando logueado.</p><p class=user>Para eliminar una actividad deberás meterte en tu cuenta y pulsar "Eliminar actividad"</p>'
+    ayuda = '<p class=user>En la primera parte de la página principal se muestran las 10 actividades más próximas en el tiempo.</p><p class=user> En la parte inferior de la página aparecen las cuentas de usuarios.</p><p class=user>Para poder obtener una cuenta deberás loguearte y estar registrado.</p><p class=user>Para añadir una actividad a tu cuenta, deberás seleccionar la actividad que desees y pulsar en "Incluir a mi página personal" estando logueado.</p><p class=user>Para eliminar una actividad deberás meterte en tu cuenta y pulsar "Eliminar actividad"</p><p class=user>En la página "todas" podemos buscar conforme a nuestras preferencias. Si queremos buscar por título, debemos añadir el título completo de la actividad o parte de él. Si lo que queremos es buscar por fecha, deberá tener el formato dd/mm/aaaa. Si deseamos filtrar por duración, deberemos hacerlo poniendo corta o larga. Si finalmente queremos hacerlo por su precio, se deberá poner "si" para ver las actividades gratuitas y "no" para ver las que son de pago.<br><br>Seguidamente aparecerán las actividades seleccionadas por los usuarios y un botón para actualizar las actividades (siempre y cuando estés logueado). Por otro lado, aparecerán las actividades según las preferencias expuestas anteriormente. </p><p class = user>Una vez logueado podrás acceder a tu página personal pulsando el botón "personal" de la barra de herramientas o bien poniendo en el recurso de la url el nombre de usuario del cual quieras ver la página</p>'
     renderizado = plantilla(formu1,titulo1,ayuda, '', '', miusuario)
     return HttpResponse(renderizado)
  
 @csrf_exempt    
-def todas(request):
+def todas(request,recurso):
     global formu
     formu1 = formu
+    global fechas
+    fechas = fechas
     plantillaPost(request)
     salida=''
     contador = 0
@@ -262,9 +274,16 @@ def todas(request):
         miusuario = request.user
     formu2 =  "<form class = 'formu2' action='' method='POST'><h2>Filtra según:</h2><button class='submit'></button><input type='text' name='titulo' placeholder='TÍTULO                ej: La ciudad encantada '/><input type='text' name='fecha'placeholder='FECHA                 ej: 29/05/2015'/><input type='text' name='duracion'placeholder='DURACIÓN        ej: larga'/><input type='text' name='precio'placeholder='GRATIS                 ej: si'/></form>"
     aux= True
-    listaux = lista[1:]
-    listaux2 = lista[1:]
-    listaux3 = []
+    
+    if(recurso == '/actualizar'):
+        lista2 = xml()
+        fechas = time.strftime("%d/%m/%y")
+        listaux = lista2[1:]
+        listaux2 = lista2[1:]
+    else:
+        listaux = lista[1:]
+        listaux2 = lista[1:]
+
     try:
         if request.method == "POST":
             titulo = request.POST['titulo']
@@ -323,6 +342,24 @@ def todas(request):
                     try:
                         salida += '<p><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'
                     except KeyError:
+                        salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>' 
+            listaux2 = listaux[:]
+            if(fecha != ''):
+                aux=False
+                fecha = fecha.split('/')     
+                salida=''
+                contador=0
+                for fila in listaux2: 
+                    if not(fecha[2] == fila['fecha'][0] and fecha[1] == fila['fecha'][1] and fecha[0] == fila['fecha'][2]):
+                        ubicacion = listaux.index(fila) 
+                        del listaux[ubicacion]
+                    else: 
+                        print   fila['fecha'][2] + fila['fecha'][1] + fila['fecha'][0]   
+                for fila in listaux:
+                    contador += 1
+                    try:
+                        salida += '<p><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'
+                    except KeyError:
                         salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'   
     except:
         salida=''
@@ -335,7 +372,18 @@ def todas(request):
                 contador += 1
                 salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'
 
-    titulo= "<p class = user>Se muestran un total de " + str(contador) + ' actividades de ocio y cultura' + salida + '</p>'
+    if request.user.is_authenticated():
+        todas = ''
+        actividades = list(Actividad.objects.all())
+        conta = 0        
+        for fila in actividades:
+            for acti in lista[1:]:
+                if(acti['id'] == fila.ide):
+                    conta = lista.index(acti)
+                    todas += '<a class = rojo href='+ lista[conta]['url'] + '>' + lista[conta]['titulo'] + '</a><br><a class= azul href=/add/' + str(conta) + '/actividad/' + lista[conta]['id'] + '>Incluir a mi pagina personal</a></br>'
+        titulo= "<p class = user>Lista de actividades disponibles seleccionadas por los usuarios<br>" + todas +"</p><p class = user>Se muestran un total de " + str(contador) + ' actividades de ocio y cultura' + '</p><p>Actualizado por ultima vez el' + str(fechas) + '<a class button href =/todas/actualizar> Actualizar actividades</a></p><p>'+ salida + '</p>'
+    else:
+        titulo= "<p class = user>Se muestran las actividades de ocio y cultura</p><p>" + salida + '</p>'
     renderizado = plantilla(formu1,formu2,titulo, '', '', miusuario )
     return HttpResponse(renderizado)
 
@@ -347,12 +395,11 @@ def actividad(request,recurso):
     miusuario = ''
     if request.user.is_authenticated():
         salida = "<ul class='bo effect1'> <h3>Eres " + request.user.username + "<br> Para salir pulsa " + "<a href=/logout/actividad/" + recurso + ">aqui</a></h3></ul> " 
-        miusuario = request.user 
+        miusuario = request.user
     actividad = ''
     precio = ''
     listaux = lista[1:] 
     for fila in listaux:
-        print fila
         if (fila['id'] == recurso):
             actividad = fila  
     gratuito = actividad['gratuito']
@@ -370,9 +417,10 @@ def actividad(request,recurso):
         dura = 'larga duracion '
     else:
         dura = 'corta duracion. '
-
     
     titulo1 = 'Esta es la pagina de la actividad ' + actividad['titulo']
     parseado = '<p class=user>' + actividad['titulo'] + ' es una actividad que se hara o se lleva haciendo desde el ' + actividad['fecha'][2] + '/' + actividad['fecha'][1] + '/' + actividad['fecha'][0] + ' a las ' + actividad['hora']+ ' horas. Es de tipo ' + actividad['tipo'] + str(precio) + 'y es de ' + str(dura) + '<br>Para mas informacion pulse <a href='+ actividad['url'] +'>aqui</a></p>'
-    renderizado = plantilla(salida,titulo1,parseado, '', '',miusuario)
+    renderizado = plantilla(salida,titulo1,parseado, '', '', miusuario)
     return HttpResponse(renderizado)
+
+#añadir titulo y descripcion del usuario. info adicional rss y css
