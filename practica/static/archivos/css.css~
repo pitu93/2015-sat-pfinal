@@ -1,8 +1,12 @@
 <style type="text/css">
 <!-- 
-    div #formu{
+    #formu{
         width:50%;
         float:right;
+    }
+    
+    form.formu2{
+        background:red
     }
     .bo h3{
         text-align:center;

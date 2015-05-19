@@ -28,12 +28,21 @@ h2 {
   font-family: "georgia";
 }
 
-form {
+form.uno {
   background: #6495ED;
   position:relative;
   margin-left:40px ;
   width: 380px;
   height: 150px;
+  border-radius: 15px; 
+}
+
+form.formu2 {
+  background: #6495ED;
+  position:relative;
+  margin-left:40px ;
+  width: 380px;
+  height: 270px;
   border-radius: 15px; 
 }
 
@@ -130,7 +139,7 @@ color:#6495ed
 }
 
 p.user{
-font-size: 10px
+font-size: 16px
 }
 a:hover
 {
