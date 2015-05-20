@@ -14,6 +14,9 @@ import string
 from models import Tabla
 from models import Actividad
 import time
+from xml.dom import minidom
+
+
 
 formu = "<form class = 'uno' action='' method='POST'><h2><span class='entypo-login'></span>Loguéate</h2><button class='submit'><span class='entypo-lock'></span></button><span class='entypo-user inputUserIcon'></span><input type='text' class='user' name='nombre'placeholder='ursername'/><span class='entypo-key inputPassIcon'></span><input type='password' name='contra' class='pass'placeholder='password'/></form>"
 
@@ -42,10 +45,9 @@ class CounterHandler(ContentHandler):
         
         if name == 'atributos':
             self.title = normalize_whitespace(attrs.get('idioma'))
-            #print " title: " + self.title + "."
         elif name == 'atributo':
             self.aux = normalize_whitespace(attrs.get('nombre')) 
-            if(self.aux == 'TITULO' or self.aux == 'TIPO' or self.aux == 'GRATUITO' or self.aux == 'PRECIO' or self.aux == 'FECHA-EVENTO' or              self.aux == 'HORA-EVENTO' or self.aux == 'EVENTO-LARGA-DURACION' or self.aux == 'CONTENT-URL-ACTIVIDAD' or self.aux == 'ID-EVENTO'):
+            if(self.aux == 'TITULO' or self.aux == 'TIPO' or self.aux == 'GRATUITO' or self.aux == 'PRECIO' or self.aux == 'FECHA-EVENTO' or              self.aux == 'HORA-EVENTO' or self.aux == 'EVENTO-LARGA-DURACION' or self.aux == 'CONTENT-URL' or self.aux == 'ID-EVENTO'):
                 self.inContent = 1
         
             
@@ -53,7 +55,7 @@ class CounterHandler(ContentHandler):
         if self.inContent:
             self.theContent = normalize_whitespace(self.theContent)
         if name == 'atributo':
-            if(self.aux == 'TITULO' or self.aux == 'TIPO' or self.aux == 'GRATUITO' or self.aux == 'PRECIO' or self.aux == 'FECHA-EVENTO' or              self.aux == 'HORA-EVENTO' or self.aux == 'EVENTO-LARGA-DURACION' or self.aux == 'CONTENT-URL-ACTIVIDAD' or self.aux == 'ID-EVENTO'):
+            if(self.aux == 'TITULO' or self.aux == 'TIPO' or self.aux == 'GRATUITO' or self.aux == 'PRECIO' or self.aux == 'FECHA-EVENTO' or              self.aux == 'HORA-EVENTO' or self.aux == 'EVENTO-LARGA-DURACION' or self.aux == 'CONTENT-URL' or self.aux == 'ID-EVENTO'):
                 if(self.aux == 'TITULO'):
                     self.lista.append(self.evento)
                     self.evento = {}
@@ -70,7 +72,7 @@ class CounterHandler(ContentHandler):
                     self.evento['hora'] = self.theContent
                 if(self.aux == 'EVENTO-LARGA-DURACION'):
                     self.evento['duracion'] = self.theContent
-                if(self.aux == 'CONTENT-URL-ACTIVIDAD'):
+                if(self.aux == 'CONTENT-URL'):
                     self.evento['url'] = self.theContent
                 if(self.aux == 'ID-EVENTO'):
                     self.evento['id'] = self.theContent
@@ -96,14 +98,40 @@ def usuario(request,recurso):
     global formu
     salida = formu
     plantillaPost(request)
+    formu2 =  ''
+    titulo1 = ''
+    titulo = ''
+    descripcion = ''
+    fila = Tabla.objects.get(user=recurso)
+    if request.method == "POST":
+        try:
+            titulo = request.POST['titulo']
+            descripcion = request.POST['descripcion'] 
+        except:
+            print 'ok'
+    if(titulo != ''):
+        fila.title = titulo
+        fila.save()
+    if(descripcion != ''):
+        fila.descripcion = descripcion
+        fila.save()
+
     miusuario = ''
+    
+    parseado = parseoPersonal(recurso)
+
     if request.user.is_authenticated():
         salida = "<ul class='bo effect1'> <h3>Eres " + request.user.username + "<br> Para salir pulsa " + "<a href= '/logout/" + recurso + "'>aqui</a></h3></ul> "
-        miusuario = request.user  
-
-    parseado = parseoPersonal(recurso)
-    titulo1 = 'Esta es la página personal de ' + str(recurso) +  '. Aquí se muestran sus actividades seleccionadas.'
-    renderizado = plantilla(salida, titulo1, parseado, '', '', miusuario )
+        formu2 =  "<form class = 'formu2' action='' method='POST'><h2>Cambia valores</h2><button class='submit'></button><input type='text' name='titulo' placeholder='TÍTULO DE PÁGINA'/><input type='text' name='descripcion' placeholder='DESCRIPCIÓN DE PÁGINA'/><input type='text' name='letra'placeholder='LETRA'/><input type='text' name='color'placeholder='COLOR LETRA'/></form>"
+        miusuario = request.user
+        if(fila.title == ''):
+            titulo1 = '<p class = user> Esta es la pagina personal de ' + str(recurso) + ' de titulo: Pagina de '+ fila.user +  '.<br><a href=/' + fila.user + '/rss>Canal RSS<br></a> Aqui se muestran sus actividades seleccionadas.</p>' + parseado 
+        else:        
+            titulo1 = '<p class = user> Esta es la pagina personal de ' + str(recurso) + ' de titulo: '+ fila.title +  '.<br><a href=/' + fila.user + '/rss>Canal RSS<br></a> Aqui se muestran sus actividades seleccionadas.</p>' + parseado  
+    else:
+        titulo1 = '<p class = user> Esta es la pagina personal de ' + str(recurso) +  '.<br><a href=/' + fila.user + '/rss>Canal RSS<br></a> Aqui se muestran sus actividades seleccionadas.</p>' + parseado
+    
+    renderizado = plantilla(salida, formu2, titulo1, '', '', miusuario )
     return HttpResponse(renderizado)
 
     
@@ -118,6 +146,7 @@ def logout_view(request,recurso):
 
 def plantilla(contenido, titulo1, actividades, titulo2, parseo, user):
     plantilla = get_template('index.html')
+    
     c = Context({'contenido': contenido, 'actividades' : actividades, 'parseo' : parseo, 'titulo1' : titulo1, 'titulo2' : titulo2,'user': user })
     renderizado = plantilla.render(c)
     return renderizado
@@ -185,9 +214,13 @@ def parseoUser(listas):
     salida = ''
     for usuario in listas:
         if usuario.title == '':
-            salida += '<p class= user>Esta es la pagina personal del usuario ' + usuario.user + ' de titulo <a class=azul href=/' + usuario.user + '>Pagina de ' + usuario.user +  '</a></p>'
+            salida += '<p class = user>Esta es la pagina personal del usuario ' + usuario.user + ' de titulo <a class=azul href=/' + usuario.user + '>Pagina de ' + usuario.user +  '</a>'
         else:
-            salida += '<p>Esta es la pagina personal del usuario ' + usuario.user + ' de titulo <a class=azul href=/' + usuario.user + '>' + usuario.title +  '</a></p>'
+            salida += '<p class = user>Esta es la pagina personal del usuario ' + usuario.user + ' de titulo <a class=azul href=/' + usuario.user + '>' + usuario.title +  '</a>'
+        if usuario.descripcion != '':
+            salida += '<br>Cuya descripcion es: ' + usuario.descripcion +'</p>'
+        else:
+            salida += '</p>'
 
     return salida
 
@@ -387,6 +420,15 @@ def todas(request,recurso):
     renderizado = plantilla(formu1,formu2,titulo, '', '', miusuario )
     return HttpResponse(renderizado)
 
+def parseoAdicional(url):
+    xmlFile = urllib2.urlopen(url)
+    try:
+        c = xmlFile.read().split('parrafo">')[1]
+        c = c.split('</div>')[0]
+    except:
+        c = ''     
+    return c.decode('utf-8')
+
 @csrf_exempt 
 def actividad(request,recurso):
     global formu
@@ -401,7 +443,8 @@ def actividad(request,recurso):
     listaux = lista[1:] 
     for fila in listaux:
         if (fila['id'] == recurso):
-            actividad = fila  
+            print 'entraa'
+            actividad = fila 
     gratuito = actividad['gratuito']
     if(gratuito == '1'):
         precio= '. La actividad es gratuita '
@@ -418,9 +461,42 @@ def actividad(request,recurso):
     else:
         dura = 'corta duracion. '
     
+    adicional = parseoAdicional(actividad['url'])
     titulo1 = 'Esta es la pagina de la actividad ' + actividad['titulo']
-    parseado = '<p class=user>' + actividad['titulo'] + ' es una actividad que se hara o se lleva haciendo desde el ' + actividad['fecha'][2] + '/' + actividad['fecha'][1] + '/' + actividad['fecha'][0] + ' a las ' + actividad['hora']+ ' horas. Es de tipo ' + actividad['tipo'] + str(precio) + 'y es de ' + str(dura) + '<br>Para mas informacion pulse <a href='+ actividad['url'] +'>aqui</a></p>'
+    parseado = '<p class=user>' + actividad['titulo'] + ' es una actividad que se hara o se lleva haciendo desde el ' + actividad['fecha'][2] + '/' + actividad['fecha'][1] + '/' + actividad['fecha'][0] + ' a las ' + actividad['hora']+ ' horas. Es de tipo ' + actividad['tipo'] + str(precio) + 'y es de ' + str(dura) + '<br>Para mas informacion pulse <a href='+ actividad['url'] +'>aqui</a><br>Informacion adicional: <br>' + adicional+ '</p>'
     renderizado = plantilla(salida,titulo1,parseado, '', '', miusuario)
     return HttpResponse(renderizado)
 
-#añadir titulo y descripcion del usuario. info adicional rss y css
+@csrf_exempt 
+def rss(request, recurso):
+    global formu
+    salida=formu
+    plantillaPost(request)
+    miusuario = ''
+    if request.user.is_authenticated():
+        salida = "<ul class='bo effect1'> <h3>Eres " + request.user.username + "<br> Para salir pulsa " + "<a href=/logout/" + recurso + "/rss>aqui</a></h3></ul> " 
+        miusuario = request.user
+    parseo = ''
+    duracion = ''
+    dinero = ''
+    precio = ''
+    actividades = list(Actividad.objects.filter(user=recurso))
+    for actividad in actividades:
+        if(actividad.duracion == '1'):
+            duracion = 'Larga duracion '
+        else:
+            duracion = 'Corta duracion '
+        if(actividad.gratuito == '1'):
+            precio= ' La actividad es gratuita '
+        else:
+            if actividad.precio != None :
+                precio = 'La actividad vale' + actividad.precio
+            else:
+                precio= 'La actividad no es gratuita '
+        parseo += '<p><item><strong><titulo>'+ actividad.titulo +'</titulo></strong><br><tipo>' + actividad.tipo + '</tipo><br><fecha>' + actividad.fecha + '</fecha><br><hora>' + actividad.hora + '</hora><br><duracion>' + duracion + '</duracion><br><precio>' + precio + '</precio></item></p>' 
+             
+    contenido = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel>' + parseo + '</channel>'    
+    renderizado = plantilla(salida,'Canal RSS',contenido, '', '', miusuario)
+    return HttpResponse(renderizado)
+
+# rss mirar github y css moreno

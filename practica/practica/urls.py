@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^actividad/(.+)$', "app.views.actividad"),
     url(r'^ayuda$', "app.views.ayuda"),
     url(r'^todas(.*)$', "app.views.todas"),
+    url(r'^(.+)/rss$', "app.views.rss"),
     url(r'^(.+)$', "app.views.usuario"),
     url(r'^$', "app.views.general"),
 ]

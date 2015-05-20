@@ -41,8 +41,8 @@ form.formu2 {
   background: #6495ED;
   position:relative;
   margin-left:40px ;
-  width: 380px;
-  height: 270px;
+  width: 400px;
+  height: 280px;
   border-radius: 15px; 
 }
 
