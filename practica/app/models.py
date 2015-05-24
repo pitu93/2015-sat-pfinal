@@ -8,6 +8,10 @@ class Tabla(models.Model):
     descripcion = models.CharField(max_length=32)
     actividad = models.CharField(max_length=32)
 
+class Like(models.Model):
+    like = models.IntegerField()
+    actividad = models.CharField(max_length=32)
+
 class Actividad(models.Model):
     user = models.CharField(max_length=32)
     titulo = models.CharField(max_length=32)

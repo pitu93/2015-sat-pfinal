@@ -13,10 +13,20 @@ import sys
 import string
 from models import Tabla
 from models import Actividad
+from models import Like
 import time
 from xml.dom import minidom
 
 
+class Estilo(object): 
+    letra = "" 
+    color = "" 
+    fondo = ""
+
+banner = Estilo()
+menu = Estilo()
+formul = Estilo()
+pie = Estilo()
 
 formu = "<form class = 'uno' action='' method='POST'><h2><span class='entypo-login'></span>Loguéate</h2><button class='submit'><span class='entypo-lock'></span></button><span class='entypo-user inputUserIcon'></span><input type='text' class='user' name='nombre'placeholder='ursername'/><span class='entypo-key inputPassIcon'></span><input type='password' name='contra' class='pass'placeholder='password'/></form>"
 
@@ -122,7 +132,7 @@ def usuario(request,recurso):
 
     if request.user.is_authenticated():
         salida = "<ul class='bo effect1'> <h3>Eres " + request.user.username + "<br> Para salir pulsa " + "<a href= '/logout/" + recurso + "'>aqui</a></h3></ul> "
-        formu2 =  "<form class = 'formu2' action='' method='POST'><h2>Cambia valores</h2><button class='submit'></button><input type='text' name='titulo' placeholder='TÍTULO DE PÁGINA'/><input type='text' name='descripcion' placeholder='DESCRIPCIÓN DE PÁGINA'/><input type='text' name='letra'placeholder='LETRA'/><input type='text' name='color'placeholder='COLOR LETRA'/></form>"
+        formu2 =  "<form class = 'formu3' action='' method='POST'><h2>Cambia valores</h2><button class='submit'></button><input type='text' name='titulo' placeholder='TÍTULO DE PÁGINA'/><input type='text' name='descripcion' placeholder='DESCRIPCIÓN DE PÁGINA'/><input type='text' name='letra' placeholder='LETRA            ej: georgia '/><input type='text' name='color'placeholder='Color                ej: red'/><input type='text' name='fondo' placeholder='Fondo               ej: blue'/><input type='text' name='sitio'placeholder='LUGAR           ej: banner/menu/formulario/pie'/></form>"
         miusuario = request.user
         if(fila.title == ''):
             titulo1 = '<p class = user> Esta es la pagina personal de ' + str(recurso) + ' de titulo: Pagina de '+ fila.user +  '.<br><a href=/' + fila.user + '/rss>Canal RSS<br></a> Aqui se muestran sus actividades seleccionadas.</p>' + parseado 
@@ -131,7 +141,12 @@ def usuario(request,recurso):
     else:
         titulo1 = '<p class = user> Esta es la pagina personal de ' + str(recurso) +  '.<br><a href=/' + fila.user + '/rss>Canal RSS<br></a> Aqui se muestran sus actividades seleccionadas.</p>' + parseado
     
-    renderizado = plantilla(salida, formu2, titulo1, '', '', miusuario )
+    css = cambioCss(request)
+    plantilla = get_template('index.html')
+    
+    c = Context({'contenido': salida, 'actividades' : titulo1, 'parseo' : '', 'titulo1' : formu2, 'titulo2' : '', 'user': miusuario, 'css':css })
+    renderizado = plantilla.render(c)
+    
     return HttpResponse(renderizado)
 
     
@@ -180,19 +195,18 @@ def general(request):
         miusuario = request.user
     usuarios = list(Tabla.objects.all())
     users = parseoUser(usuarios)
-    parseado = parseo(lista, request)
+    parseado = parseo(lista, request,'')
     titulo1 = '¿Quieres venir a alguna actividad en Madrid? Aquí te mostramos las 10 próximas'
     titulo2 = '¿Quieres tener una página personal como estas que te mostramos? Para ello regístrate'
     renderizado = plantilla(salida,titulo1,parseado, titulo2, users, miusuario)
     return HttpResponse(renderizado)
 
-def parseo(lista, request):
+def parseo(lista, request, lugar):
     salida = ''
     aux = []
     listaux = lista[1:]
     for fila in listaux:
         if (fila['fecha'][0] == '2014'):
-            print fila['titulo']
             aux.append(fila)
     
     for i in ['01','02','03','04','05','06','07','08','09','10','11','12']:
@@ -201,14 +215,57 @@ def parseo(lista, request):
                 if(fila['fecha'][0] == '2015' and fila['fecha'][1] == i and fila['fecha'][2] == j and len(aux)<10):
                     aux.append(fila)             
 
+    gustas = ''
     if request.user.is_authenticated():
+        
         for fila in aux:
-            i = lista.index(fila) 
-            salida += '<p><h7><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a> </h7><br><a class= azul href=/add/' + str(i) + '/p' + '>Incluir a mi pagina personal</a></p><br>'
+            i = lista.index(fila)
+            try:
+                
+                gustas = Like.objects.get(actividad = i)
+                print 'busco try '+ str(i)
+                gustas = gustas.like
+            except :
+                gustas= 0
+            
+            salida += '<p><h7><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a> </h7><br><a class= azul href=/add/' + str(i) + '/29>Incluir a mi pagina personal</a><a class= azul href=/like/0/' + str(i) + '> Sumar un me gusta: ' + str(gustas) + '</a></p><br>'
     else:
         for fila in aux:
-            salida += '<p><h7><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a> </h7></p><br>'
+            i = lista.index(fila)
+            try:
+                
+                gustas = Like.objects.get(actividad = i)
+                print 'busco try '+ str(i)
+                gustas = gustas.like
+            except :
+                gustas= 0
+            salida += '<p><h7><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a> </h7><br><a class= azul href=/like/0/' + str(i) + '> Sumar un me gusta: ' + str(gustas) + '</a></p><br>'
     return salida
+
+@csrf_exempt 
+def megustas(request,lugar,recurso):
+
+    gustas = ''
+    try:
+        gustas = Like.objects.get(actividad = int(recurso))
+        gustas.like += 1
+        gustas.save()
+        print 'try ' + recurso
+    except :
+        print 'except ' + recurso
+        gustas = Like()
+        gustas.like=1
+        gustas.actividad = int(recurso)
+        gustas.save()
+
+    if(lugar == '1'): 
+        return HttpResponseRedirect('/todas')
+
+    elif(lugar == '0'): 
+        return HttpResponseRedirect('/')
+    else:
+        return HttpResponseRedirect('/actividad/' + lugar)   
+     
     
 def parseoUser(listas):
     salida = ''
@@ -232,11 +289,15 @@ def parseoPersonal(user):
 
     return salida
 
+@csrf_exempt 
 def add(request, recurso1):
     recurso = int(recurso1.split('/')[0])
+    #recurso = recurso1.split('/')[0]
+    print 'recurso' + str(recurso)
     i=1;
     longi= len(recurso1.split('/')[1:])
     recurso2 = '/'
+    
     while (i<= longi):        
         recurso2 += '/' + recurso1.split('/')[i]
         i+=1
@@ -263,7 +324,7 @@ def add(request, recurso1):
         act.url = lista[recurso]['url']
         act.ide = lista[recurso]['id']
         act.save()
-    if (recurso2 == 'p'):
+    if (recurso2 == '//29'):
         return HttpResponseRedirect('/')
     else:
         aux= '/' + recurso2
@@ -288,12 +349,74 @@ def ayuda(request):
         formu1 = "<ul class='bo effect1'> <h3>Eres " + request.user.username + "<br> Para salir pulsa " + "<a href= '/logout/ayuda'>aqui</a></h3></ul> "
         miusuario = request.user
 
-    ayuda = '<p class=user>En la primera parte de la página principal se muestran las 10 actividades más próximas en el tiempo.</p><p class=user> En la parte inferior de la página aparecen las cuentas de usuarios.</p><p class=user>Para poder obtener una cuenta deberás loguearte y estar registrado.</p><p class=user>Para añadir una actividad a tu cuenta, deberás seleccionar la actividad que desees y pulsar en "Incluir a mi página personal" estando logueado.</p><p class=user>Para eliminar una actividad deberás meterte en tu cuenta y pulsar "Eliminar actividad"</p><p class=user>En la página "todas" podemos buscar conforme a nuestras preferencias. Si queremos buscar por título, debemos añadir el título completo de la actividad o parte de él. Si lo que queremos es buscar por fecha, deberá tener el formato dd/mm/aaaa. Si deseamos filtrar por duración, deberemos hacerlo poniendo corta o larga. Si finalmente queremos hacerlo por su precio, se deberá poner "si" para ver las actividades gratuitas y "no" para ver las que son de pago.<br><br>Seguidamente aparecerán las actividades seleccionadas por los usuarios y un botón para actualizar las actividades (siempre y cuando estés logueado). Por otro lado, aparecerán las actividades según las preferencias expuestas anteriormente. </p><p class = user>Una vez logueado podrás acceder a tu página personal pulsando el botón "personal" de la barra de herramientas o bien poniendo en el recurso de la url el nombre de usuario del cual quieras ver la página</p>'
+    ayuda = '<p class=user>En la primera parte de la página principal se muestran las 10 actividades más próximas en el tiempo.</p><p class=user> En la parte inferior de la página aparecen las cuentas de usuarios.</p><p class=user>Para poder obtener una cuenta deberás loguearte y estar registrado.</p><p class=user>Para añadir una actividad a tu cuenta, deberás seleccionar la actividad que desees y pulsar en "Incluir a mi página personal" estando logueado.</p><p class=user>Para eliminar una actividad deberás meterte en tu cuenta y pulsar "Eliminar actividad"</p><p class=user>En la página "todas" podemos buscar conforme a nuestras preferencias. Si queremos buscar por título, debemos añadir el título completo de la actividad o parte de él. Si lo que queremos es buscar por fecha, deberá tener el formato dd/mm/aaaa. Si deseamos filtrar por duración, deberemos hacerlo poniendo corta o larga. Si finalmente queremos hacerlo por su precio, se deberá poner "si" para ver las actividades gratuitas y "no" para ver las que son de pago.<br><br>Seguidamente aparecerán las actividades seleccionadas por los usuarios y un botón para actualizar las actividades (siempre y cuando estés logueado). Por otro lado, aparecerán las actividades según las preferencias expuestas anteriormente. </p><p class = user>Si estás logueado podrás acceder a tu página personal pulsando "personal" en el menú. Si no lo estás, podrás acceder a una página personal pinchando en el título de las páginas personales que se encuentran en la parte inferior de la página principal, o bien introduciendo en la url como recurso, el usuario de la página que quieras ver.</p><p class = user>Una vez que estés en una página personal, si no estás logueado aparecerá un enlace al canal RSS del usuario y sus actividades seleccionadas. Si estás logueado, aparecerá un formulario en el que podrás cambiar el título de la página y la descripción de la misma. Por otro lado podrás modificar el tipo de letra, el color de esta y el fondo de uno de los cuatro sitios que aparecen en el formulario y siguiendo las instrucciones que se dan en el mismo. Si quieres volver al estado original deberás introducir un espacio en el apartado que desees.</p>'
     renderizado = plantilla(formu1,titulo1,ayuda, '', '', miusuario)
     return HttpResponse(renderizado)
+
+@csrf_exempt
+def cambioCss(request):
+    global banner
+    global menu 
+    global formu 
+    global pie
+
+    try:
+        if request.method == "POST":
+            letra = request.POST['letra']
+            color = request.POST['color']
+            fondo = request.POST['fondo']
+            sitio = request.POST['sitio']
+
+        css = ''
+        if sitio != '':
+            if sitio == 'pie':
+                if letra != '':
+                    pie.letra = letra
+                if color != '':
+                    pie.color = color
+                if fondo != '':
+                    pie.fondo = fondo
+            if sitio == 'banner':
+                if letra != '':
+                    banner.letra = letra
+                if color != '':
+                    banner.color = color
+                if fondo != '':
+                    banner.fondo = fondo
+            if sitio == 'menu':
+                if letra != '':
+                    menu.letra = letra
+                if color != '':
+                    menu.color = color
+                if fondo != '':
+                    menu.fondo = fondo
+            if sitio == 'formulario':
+                if letra != '':
+                    formul.letra = letra
+                if color != '':
+                    formul.color = color
+                if fondo != '':
+                    formul.fondo = fondo
+            
+    except:
+        css = ''
+
+    css = '#footer{font-family:' + pie.letra + '; color:' + pie.color + '; background:' + pie.fondo + ';}' 
+    css += '#menu{background:' + menu.fondo + ';}' 
+    css += '#menu ul li a{font-family:' + menu.letra + '; color:' + menu.color + ';}'
+    css += '#headerpic{font-family:' + banner.letra + '; color:' + banner.color + '; background:' + banner.fondo + ';}'
+    css += 'form.uno h2{font-family:' + formul.letra + '; color:' + formul.color + '; background:' + formul.fondo + ';}'
+    css += 'form.uno{background:' + formul.fondo + ';}'
+    css += '.bo h3{font-family:' + formul.letra + '; color:' + formul.color + '; }'
+    css += '.bo h3 a{font-family:' + formul.letra + '; color:' + formul.color +  ';}'
+    css += '.bo{background:' + formul.fondo + ';}'
+
+    return css 
+
  
 @csrf_exempt    
 def todas(request,recurso):
+    
     global formu
     formu1 = formu
     global fechas
@@ -302,11 +425,12 @@ def todas(request,recurso):
     salida=''
     contador = 0
     miusuario = ''
-    if request.user.is_authenticated():
-        formu1 = "<ul class='bo effect1'> <h3>Eres " + request.user.username + "<br> Para salir pulsa " + "<a href= '/logout/todas'>aqui</a></h3></ul> "
-        miusuario = request.user
     formu2 =  "<form class = 'formu2' action='' method='POST'><h2>Filtra según:</h2><button class='submit'></button><input type='text' name='titulo' placeholder='TÍTULO                ej: La ciudad encantada '/><input type='text' name='fecha'placeholder='FECHA                 ej: 29/05/2015'/><input type='text' name='duracion'placeholder='DURACIÓN        ej: larga'/><input type='text' name='precio'placeholder='GRATIS                 ej: si'/></form>"
     aux= True
+
+    if request.user.is_authenticated():
+        formu1 = "<ul class='bo effect1'> <h3>Eres " + request.user.username + "<br> Para salir pulsa " + "<a href= '/logout/todas'>aqui</a></h3></ul> "
+        miusuario = request.user  
     
     if(recurso == '/actualizar'):
         lista2 = xml()
@@ -338,6 +462,7 @@ def todas(request,recurso):
                         del listaux[ubicacion] 
 
             listaux2 = listaux[:]
+
             if (duracion != ''):
                 aux= False
                 if (duracion == 'larga'):
@@ -358,6 +483,7 @@ def todas(request,recurso):
                         salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>' 
                          
             listaux2 = listaux[:]
+
             if(gratis != ''):
                 aux=False
                 if (gratis == 'si'):
@@ -376,7 +502,9 @@ def todas(request,recurso):
                         salida += '<p><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'
                     except KeyError:
                         salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>' 
+
             listaux2 = listaux[:]
+
             if(fecha != ''):
                 aux=False
                 fecha = fecha.split('/')     
@@ -393,17 +521,28 @@ def todas(request,recurso):
                     try:
                         salida += '<p><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'
                     except KeyError:
-                        salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'   
+                        salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'
+
     except:
         salida=''
+
+      
+
     if (aux):
         for fila in listaux2:
+            i = lista.index(fila)
+            try:                
+                gustas = Like.objects.get(actividad = i)
+                gustas = gustas.like
+            except :
+                gustas= 0
+
             try:
                 contador += 1
-                salida+=  '<p><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'
+                salida+=  '<p><a class= rojo href=' + fila['url'] + '>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a><a class= azul href=/like/1/' + str(i) + '> Sumar un me gusta: ' + str(gustas) + '</a></p>'
             except KeyError:
                 contador += 1
-                salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a></p>'
+                salida += '<p>~ ' + fila['titulo'] + '</a><br><a class= azul href=/add/' + str(contador) + '/todas'+ '>Incluir a mi pagina personal</a><a class= azul href=/like/1/' + str(i) + '> Sumar un me gusta: ' + str(gustas) + '</a></p>'
 
     if request.user.is_authenticated():
         todas = ''
@@ -414,11 +553,15 @@ def todas(request,recurso):
                 if(acti['id'] == fila.ide):
                     conta = lista.index(acti)
                     todas += '<a class = rojo href='+ lista[conta]['url'] + '>' + lista[conta]['titulo'] + '</a><br><a class= azul href=/add/' + str(conta) + '/actividad/' + lista[conta]['id'] + '>Incluir a mi pagina personal</a></br>'
-        titulo= "<p class = user>Lista de actividades disponibles seleccionadas por los usuarios<br>" + todas +"</p><p class = user>Se muestran un total de " + str(contador) + ' actividades de ocio y cultura' + '</p><p>Actualizado por ultima vez el' + str(fechas) + '<a class button href =/todas/actualizar> Actualizar actividades</a></p><p>'+ salida + '</p>'
+        titulo= "<p class = user>Se muestran un total de " + str(contador) + ' actividades de ocio y cultura' + '</p><p>Actualizado por ultima vez el' + str(fechas) + '<a class button href =/todas/actualizar> Actualizar actividades</a></p><p>'+ salida + '</p>'
+        
+        formu1 += "<p class = user>Lista de actividades disponibles seleccionadas por los usuarios<br>" + todas +"</p>"
     else:
         titulo= "<p class = user>Se muestran las actividades de ocio y cultura</p><p>" + salida + '</p>'
-    renderizado = plantilla(formu1,formu2,titulo, '', '', miusuario )
+            
+    renderizado = renderizado = plantilla(formu1,formu2,titulo, '', '', miusuario )    
     return HttpResponse(renderizado)
+
 
 def parseoAdicional(url):
     xmlFile = urllib2.urlopen(url)
@@ -461,9 +604,17 @@ def actividad(request,recurso):
     else:
         dura = 'corta duracion. '
     
+    i = lista.index(actividad)
+    try:
+        
+        gustas = Like.objects.get(actividad = i)
+        print 'busco try '+ str(i)
+        gustas = gustas.like
+    except :
+        gustas= 0
     adicional = parseoAdicional(actividad['url'])
     titulo1 = 'Esta es la pagina de la actividad ' + actividad['titulo']
-    parseado = '<p class=user>' + actividad['titulo'] + ' es una actividad que se hara o se lleva haciendo desde el ' + actividad['fecha'][2] + '/' + actividad['fecha'][1] + '/' + actividad['fecha'][0] + ' a las ' + actividad['hora']+ ' horas. Es de tipo ' + actividad['tipo'] + str(precio) + 'y es de ' + str(dura) + '<br>Para mas informacion pulse <a href='+ actividad['url'] +'>aqui</a><br>Informacion adicional: <br>' + adicional+ '</p>'
+    parseado = '<p class=user>' + actividad['titulo'] + ' es una actividad que se hara o se lleva haciendo desde el ' + actividad['fecha'][2] + '/' + actividad['fecha'][1] + '/' + actividad['fecha'][0] + ' a las ' + actividad['hora']+ ' horas. Es de tipo ' + actividad['tipo'] + str(precio) + 'y es de ' + str(dura) + '<br>Para mas informacion pulse <a href='+ actividad['url'] +'>aqui</a><br>Informacion adicional: <br>' + adicional+ '</p><p><a class= azul href=/like/' + recurso +'/' + str(i) + '> Sumar un me gusta: ' + str(gustas) + '</a></p>'
     renderizado = plantilla(salida,titulo1,parseado, '', '', miusuario)
     return HttpResponse(renderizado)
 

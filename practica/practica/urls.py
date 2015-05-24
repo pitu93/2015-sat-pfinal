@@ -12,6 +12,7 @@ urlpatterns = [
     url(r'^logout/(.+)$', "app.views.logout_view"),
     url(r'^add/(.+)$', "app.views.add"),
     url(r'^eliminar/(.+)/(.+)$', "app.views.eliminar"),
+    url(r'^like/(.+)/(.+)$', "app.views.megustas"),
     url(r'^actividad/(.+)$', "app.views.actividad"),
     url(r'^ayuda$', "app.views.ayuda"),
     url(r'^todas(.*)$', "app.views.todas"),
